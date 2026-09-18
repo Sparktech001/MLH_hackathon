@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "https://sabi-ai-2tmb.onrender.com/docs"
+API_URL = "https://sabi-ai-2tmb.onrender.com"
 st.set_page_config(page_title="SABI AI", page_icon="🎓", layout="wide")
 
 if "token" not in st.session_state:
