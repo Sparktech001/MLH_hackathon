@@ -1,32 +1,49 @@
-import chromadb
-from chromadb.utils import embedding_functions
 import os
+from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from backend.services.supabase_client import supabase
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-CHROMA_DATA_PATH = os.path.join(BASE_DIR, "data", "vector_store")
-
-client = chromadb.PersistentClient(path=CHROMA_DATA_PATH)
-embedding_func = embedding_functions.DefaultEmbeddingFunction()
-
-collection = client.get_or_create_collection(
-    name="academic_materials",
-    embedding_function=embedding_func
-)
+embeddings_model = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
 
 def add_chunks_to_db(chunks: list[str], metadatas: list[dict], ids: list[str]):
     try:
-        collection.add(documents=chunks, metadatas=metadatas, ids=ids)
-        print(f"✅ Successfully added {len(chunks)} chunks to the Vector Store.")
+        # Generate embeddings using Google Gemini
+        vectors = embeddings_model.embed_documents(chunks)
+        
+        # Prepare for Supabase insert
+        data = []
+        for i, chunk_text in enumerate(chunks):
+            meta = metadatas[i]
+            data.append({
+                "chunk_id": ids[i],
+                "text": chunk_text,
+                "course_code": meta.get("course_code", "Unknown"),
+                "course_name": meta.get("course_name", "Unknown"),
+                "user_email": meta.get("user_email"),
+                "source_file": meta.get("source_file", "Unknown"),
+                "page": meta.get("page", 1),
+                "embedding": vectors[i]
+            })
+            
+        # Bulk insert into Supabase
+        supabase.table("document_chunks").insert(data).execute()
+        print(f"✅ Successfully added {len(chunks)} chunks to Supabase Vector Store.")
     except Exception as e:
         print(f"❌ Error adding chunks to Vector Store: {e}")
 
 def query_vector_store(query_text: str, user_email: str, n_results: int = 3):
     """
-    Queries the vector store, filtering strictly by the user's email.
+    Queries the vector store using the custom match_documents rpc function.
+    Returns a list of dicts.
     """
-    results = collection.query(
-        query_texts=[query_text],
-        n_results=n_results,
-        where={"user_email": user_email}  # <--- Core Data Isolation Logic
-    )
-    return results
+    query_embedding = embeddings_model.embed_query(query_text)
+    
+    try:
+        res = supabase.rpc("match_documents", {
+            "query_embedding": query_embedding,
+            "match_user_email": user_email,
+            "match_count": n_results
+        }).execute()
+        return res.data
+    except Exception as e:
+        print(f"Error executing vector search: {e}")
+        return []

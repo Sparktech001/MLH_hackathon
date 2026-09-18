@@ -14,9 +14,11 @@ app.add_middleware(
 )
 
 # Dev B Routes (Ingestion & Auth)
+from backend.routes import learning
 app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(courses.router)
+app.include_router(learning.router)
 
 # Dev A Routes (Chat)
 app.include_router(chat_router)

@@ -4,32 +4,27 @@ from backend.rag.embeddings import query_vector_store
 
 def search_documents(query: str, user_email: str, course: Optional[str] = None, top_k: int = 5) -> List[DocumentChunk]:
     """
-    Actual implementation of vector store retrieval using ChromaDB.
+    Actual implementation of vector store retrieval using Supabase pgvector.
     """
     try:
         raw_results = query_vector_store(query, user_email, n_results=top_k)
-        
         results = []
-        if not raw_results or not raw_results.get("documents") or not raw_results["documents"][0]:
+        
+        if not raw_results:
             return []
             
-        docs = raw_results["documents"][0]
-        metadatas = raw_results["metadatas"][0]
-        ids = raw_results["ids"][0]
-        
-        for i in range(len(docs)):
-            meta = metadatas[i]
-            if course and meta.get("course_code") != course and meta.get("course_name") != course:
+        for doc in raw_results:
+            if course and doc.get("course_code") != course and doc.get("course_name") != course:
                 continue
                 
             chunk = DocumentChunk(
-                chunk_id=ids[i],
-                text=docs[i],
-                course_code=meta.get("course_code", "Unknown"),
-                course_name=meta.get("course_name", "Unknown"),
-                user_email=meta.get("user_email", user_email),
-                source_file=meta.get("source_file", "Unknown"),
-                page=meta.get("page", 1)
+                chunk_id=doc.get("chunk_id", "unknown"),
+                text=doc.get("text", ""),
+                course_code=doc.get("course_code", "Unknown"),
+                course_name=doc.get("course_name", "Unknown"),
+                user_email=doc.get("user_email", user_email),
+                source_file=doc.get("source_file", "Unknown"),
+                page=doc.get("page", 1)
             )
             results.append(chunk)
             
