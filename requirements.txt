@@ -11,3 +11,4 @@ pydantic
 python-dotenv
 langchain-google-genai
 langchain-core
+supabase
