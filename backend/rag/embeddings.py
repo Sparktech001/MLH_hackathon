@@ -2,7 +2,7 @@ import os
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from backend.services.supabase_client import supabase
 
-embeddings_model = GoogleGenerativeAIEmbeddings(model="models/text-embedding-004")
+embeddings_model = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
 
 def add_chunks_to_db(chunks: list[str], metadatas: list[dict], ids: list[str]):
     try:
