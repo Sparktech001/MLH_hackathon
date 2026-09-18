@@ -1,0 +1,26 @@
+# Virtual Environments
+venv/
+env/
+.env/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environment Variables
+.env
+
+# Local Databases & Vector Stores (Keep these out of git!)
+data/users.db
+data/vector_store/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
