@@ -1,7 +1,7 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.routes import documents, courses, auth
-from backend.services.auth import get_current_user
+from backend.routes.chat import router as chat_router
 
 app = FastAPI(title="AI Academic Agent Backend")
 
@@ -13,17 +13,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Dev B Routes (Ingestion & Auth)
 app.include_router(auth.router)
 app.include_router(documents.router)
 app.include_router(courses.router)
 
-@app.post("/chat")
-async def chat_endpoint(payload: dict, current_user: str = Depends(get_current_user)):
-    # Developer A will implement this, but we pass them the `current_user` so they know who is asking!
-    return {
-        "answer": f"This is a placeholder for {current_user}! Dev A will query the Vector Store here.",
-        "source": "Placeholder Source, Page 1"
-    }
+# Dev A Routes (Chat)
+app.include_router(chat_router)
 
 @app.get("/health")
 async def health_check():

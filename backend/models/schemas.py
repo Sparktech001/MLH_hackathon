@@ -1,5 +1,21 @@
 from pydantic import BaseModel
+from typing import Optional, List
 
+# --- DEV A (CHAT) SCHEMAS ---
+class ChatRequest(BaseModel):
+    message: str
+    course: Optional[str] = None
+
+class Source(BaseModel):
+    source_file: str
+    page: Optional[int] = None
+    course: Optional[str] = None
+
+class ChatResponse(BaseModel):
+    answer: str
+    sources: List[Source]
+
+# --- COMBINED CHUNK SCHEMA ---
 class DocumentChunk(BaseModel):
     chunk_id: str
     text: str
@@ -9,6 +25,7 @@ class DocumentChunk(BaseModel):
     source_file: str  
     page: int         
 
+# --- DEV B (AUTH) SCHEMAS ---
 class UserCreate(BaseModel):
     email: str
     password: str
