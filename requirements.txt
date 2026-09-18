@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+python-multipart
+pypdf
+streamlit
+requests
+chromadb
+PyJWT
+bcrypt
