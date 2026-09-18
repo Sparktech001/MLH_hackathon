@@ -165,7 +165,7 @@ def dashboard():
                                 st.success("Quiz Generated and Saved!")
                                 st.rerun()
                             else:
-                                st.error("Failed to generate quiz.")
+                                st.error(f"Failed to generate quiz. Detail: {res.text}")
                     else:
                         st.warning("Please enter a topic.")
             else:
@@ -206,7 +206,7 @@ def dashboard():
                                 st.success("Study Plan Generated and Saved!")
                                 st.rerun()
                             else:
-                                st.error("Failed to generate plan.")
+                                st.error(f"Failed to generate plan. Detail: {res.text}")
                     else:
                         st.warning("Please enter a topic.")
             else:

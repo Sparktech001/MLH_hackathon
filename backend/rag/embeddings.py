@@ -29,6 +29,7 @@ def add_chunks_to_db(chunks: list[str], metadatas: list[dict], ids: list[str]):
         print(f"✅ Successfully added {len(chunks)} chunks to Supabase Vector Store.")
     except Exception as e:
         print(f"❌ Error adding chunks to Vector Store: {e}")
+        raise e
 
 def query_vector_store(query_text: str, user_email: str, n_results: int = 3):
     """
@@ -46,4 +47,4 @@ def query_vector_store(query_text: str, user_email: str, n_results: int = 3):
         return res.data
     except Exception as e:
         print(f"Error executing vector search: {e}")
-        return []
+        raise e

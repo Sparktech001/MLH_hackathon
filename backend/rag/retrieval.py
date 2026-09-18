@@ -31,4 +31,4 @@ def search_documents(query: str, user_email: str, course: Optional[str] = None, 
         return results
     except Exception as e:
         print(f"Error querying vector store: {e}")
-        return []
+        raise e

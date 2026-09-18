@@ -23,6 +23,17 @@ app.include_router(learning.router)
 # Dev A Routes (Chat)
 app.include_router(chat_router)
 
+from fastapi import Request
+from fastapi.responses import JSONResponse
+import traceback
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": traceback.format_exc()}
+    )
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok", "message": "Backend is running!"}
