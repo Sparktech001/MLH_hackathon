@@ -1,5 +1,5 @@
 fastapi
-uvicorn
+uvicorn[standard]
 python-multipart
 pypdf
 streamlit
@@ -7,3 +7,7 @@ requests
 chromadb
 PyJWT
 bcrypt
+pydantic
+python-dotenv
+langchain-google-genai
+langchain-core
