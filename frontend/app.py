@@ -2,13 +2,13 @@ import streamlit as st
 import requests
 
 API_URL = "http://localhost:8000"
-st.set_page_config(page_title="Academic Agent", page_icon="🎓", layout="wide")
+st.set_page_config(page_title="SABI AI", page_icon="🎓", layout="wide")
 
 if "token" not in st.session_state:
     st.session_state.token = None
 
 def login_screen():
-    st.title("🎓 Login to Academic Agent")
+    st.title("🎓 Login to SABI AI")
     st.write("Welcome! Please log in or register to securely access your documents.")
     
     email = st.text_input("Email")
@@ -55,7 +55,7 @@ def dashboard():
     # PAGE: CHAT & UPLOAD
     # ================================
     if page == "Chat & Upload":
-        st.title("🎓 Academic Agent Dashboard")
+        st.title("🎓 SABI AI Dashboard")
         st.markdown("Your academic materials, securely isolated.")
         st.divider()
 

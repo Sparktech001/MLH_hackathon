@@ -1,6 +1,20 @@
-# 🎓 AI Academic Agent (Combined Developer A & B Guide)
+# 🎓 SABI AI (Combined Developer A & B Guide)
 
-This repository contains both the frontend (Streamlit) and the backend (FastAPI) for the AI Academic Agent. It features a complete RAG pipeline for uploading course material and querying it via an AI Agent.
+**SABI AI** is an **AI academic assistant for university students** that allows them to upload their lecture notes, PDFs, and other academic materials, then **chat with an AI that understands those materials**.
+
+The agent can:
+
+* 📚 **Analyze academic documents** — extracts and understands uploaded PDFs.
+* 🔎 **Search documents** — finds relevant information from a student's materials using RAG.
+* 💬 **Answer questions** — students can ask questions and receive answers grounded in their documents.
+* 🧠 **Explain concepts** — simplifies difficult topics from their lecture materials.
+* 📝 **Generate quizzes** — creates questions based on what the student has studied.
+* 📅 **Create study plans** — helps students organize what to study based on their materials.
+* 📄 **Show sources** — points students back to the document/page where an answer came from.
+
+> **SABI AI is an AI academic agent that turns a student's lecture materials into an interactive study partner they can chat with, search, learn from, quiz themselves with, and use to plan their studies.**
+
+This repository contains both the frontend (Streamlit) and the backend (FastAPI) for SABI AI. The web app is the first interface, while WhatsApp can later connect to the same SABI AI agent through the FastAPI backend.
 
 ---
 

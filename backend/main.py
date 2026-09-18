@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.routes import documents, courses, auth
 from backend.routes.chat import router as chat_router
 
-app = FastAPI(title="AI Academic Agent Backend")
+app = FastAPI(title="SABI AI Backend")
 
 app.add_middleware(
     CORSMiddleware,
