@@ -26,3 +26,22 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         return {"access_token": access_token, "token_type": "bearer"}
         
     raise HTTPException(status_code=400, detail="Incorrect email or password")
+
+from backend.services.auth import get_current_user, get_user_profile, update_welcome_seen, add_user_xp
+
+@router.get("/profile")
+async def get_profile(current_user: str = Depends(get_current_user)):
+    return get_user_profile(current_user)
+
+@router.post("/welcome-seen")
+async def welcome_seen(current_user: str = Depends(get_current_user)):
+    update_welcome_seen(current_user)
+    return {"message": "Welcome seen updated"}
+
+class XPUpdate(BaseModel):
+    xp_amount: int
+
+@router.post("/add-xp")
+async def add_xp(xp_update: XPUpdate, current_user: str = Depends(get_current_user)):
+    new_xp = add_user_xp(current_user, xp_update.xp_amount)
+    return {"xp": new_xp}

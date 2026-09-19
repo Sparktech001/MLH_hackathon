@@ -152,8 +152,18 @@ inject_custom_css()
 if "token" not in st.session_state:
     st.session_state.token = None
 
+@st.dialog("🎉 Welcome to SABI AI!")
+def welcome_dialog():
+    st.write("Welcome to your ultimate AI study buddy!")
+    st.write("You can upload PDFs, generate interactive quizzes, and build study plans.")
+    st.write("As you study, you'll earn XP! Get 50 XP for uploading, 20 XP for generating quizzes, and 100 XP for passing them!")
+    if st.button("Let's Go!"):
+        headers = {"Authorization": f"Bearer {st.session_state.token}"}
+        requests.post(f"{API_URL}/auth/welcome-seen", headers=headers)
+        st.rerun()
+
 import re
-def render_interactive_quiz(content, quiz_id):
+def render_interactive_quiz(content, quiz_id, headers):
     blocks = content.split('\n\n')
     quiz_blocks = []
     answer_key_block = None
@@ -231,6 +241,10 @@ def render_interactive_quiz(content, quiz_id):
             
             if percent >= 70:
                 st.success(f"🎉 **Pass!** You scored {score}/{len(question_keys)} ({percent:.0f}%)")
+                if f"passed_{quiz_id}" not in st.session_state:
+                    requests.post(f"{API_URL}/auth/add-xp", json={"xp_amount": 100}, headers=headers)
+                    st.session_state[f"passed_{quiz_id}"] = True
+                    st.balloons()
             else:
                 st.error(f"📖 **Keep studying.** You scored {score}/{len(question_keys)} ({percent:.0f}%)")
                 
@@ -287,6 +301,16 @@ def dashboard():
         quizzes = []
         quiz_count = 0
 
+    # Fetch Gamification Profile
+    try:
+        res = requests.get(f"{API_URL}/auth/profile", headers=headers)
+        profile = res.json()
+    except:
+        profile = {"xp": 0, "has_seen_welcome": True}
+        
+    if not profile.get("has_seen_welcome", True):
+        welcome_dialog()
+
     # --- SIDEBAR NAVIGATION ---
     st.sidebar.markdown(
         """
@@ -302,6 +326,13 @@ def dashboard():
     st.sidebar.markdown("<h4 style='color: #94a3b8; font-size: 0.9rem;'>📊 Quick Stats</h4>", unsafe_allow_html=True)
     
     st.sidebar.markdown(f"""
+        <div class="stat-card">
+            <div class="stat-card-icon">🌟</div>
+            <div>
+                <div style="font-size: 0.8rem; color: #94a3b8;">Total XP</div>
+                <div style="font-weight: 600;">{profile.get('xp', 0)} XP</div>
+            </div>
+        </div>
         <div class="stat-card">
             <div class="stat-card-icon">📚</div>
             <div>
@@ -398,6 +429,8 @@ def dashboard():
                         
                         if res.status_code == 200:
                             st.success(f"✅ {uploaded_file.name} processed successfully.")
+                            requests.post(f"{API_URL}/auth/add-xp", json={"xp_amount": 50}, headers=headers)
+                            st.balloons()
                         else:
                             st.error(f"Failed to upload document. {res.text}")
                 else:
@@ -465,6 +498,7 @@ def dashboard():
                             res = requests.post(f"{API_URL}/learning/quizzes/generate", json={"course_code": c_code, "topic": topic}, headers=headers)
                             if res.status_code == 200:
                                 st.success("Quiz Generated and Saved!")
+                                requests.post(f"{API_URL}/auth/add-xp", json={"xp_amount": 20}, headers=headers)
                                 st.rerun()
                             else:
                                 st.error(f"Failed to generate quiz. Detail: {res.text}")
@@ -481,7 +515,7 @@ def dashboard():
                     st.write("No quizzes generated yet.")
                 for q in quizzes:
                     with st.expander(f"Quiz: {q['course_code']} - {q['topic']}"):
-                        render_interactive_quiz(q['content'], q['id'])
+                        render_interactive_quiz(q['content'], q['id'], headers)
             except:
                 st.error("Could not fetch quizzes.")
 

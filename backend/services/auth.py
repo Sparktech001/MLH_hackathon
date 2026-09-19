@@ -62,3 +62,32 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> str:
         return email
     except jwt.PyJWTError:
         raise credentials_exception
+
+def get_user_profile(email: str) -> dict:
+    try:
+        res = supabase.table("users").select("xp, has_seen_welcome").eq("email", email).execute()
+        if res.data and len(res.data) > 0:
+            return res.data[0]
+        return {"xp": 0, "has_seen_welcome": False}
+    except Exception as e:
+        print(f"Error fetching profile: {e}")
+        return {"xp": 0, "has_seen_welcome": False}
+
+def update_welcome_seen(email: str) -> bool:
+    try:
+        supabase.table("users").update({"has_seen_welcome": True}).eq("email", email).execute()
+        return True
+    except Exception as e:
+        print(f"Error updating welcome: {e}")
+        return False
+
+def add_user_xp(email: str, xp_amount: int) -> int:
+    try:
+        # First get current xp
+        current = get_user_profile(email).get("xp", 0)
+        new_xp = current + xp_amount
+        supabase.table("users").update({"xp": new_xp}).eq("email", email).execute()
+        return new_xp
+    except Exception as e:
+        print(f"Error adding xp: {e}")
+        return 0
