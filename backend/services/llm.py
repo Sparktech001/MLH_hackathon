@@ -7,9 +7,9 @@ from langchain_core.messages import HumanMessage
 load_dotenv()
 
 # We initialize the LLM client here.
-# Note: we changed to gemini-1.5-flash because gemini-2.5-flash has a strict 20 RPD free tier quota
+# Note: we use the new gemini-3.8-flash model as it's the recommended default for fast reasoning in 2026.
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
+    model="gemini-3.8-flash",
     google_api_key=os.getenv("GOOGLE_API_KEY"),
     temperature=0.2
 )
