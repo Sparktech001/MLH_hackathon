@@ -19,6 +19,136 @@ if "server_woken" not in st.session_state:
 
 st.set_page_config(page_title="SABI AI", page_icon="🎓", layout="wide")
 
+# --- CUSTOM CSS ---
+def inject_custom_css():
+    st.markdown("""
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        html, body, [class*="css"] {
+            font-family: 'Inter', sans-serif !important;
+        }
+        
+        /* Background */
+        .stApp {
+            background-color: #0b1121;
+            color: #ffffff;
+        }
+        
+        /* Sidebar */
+        [data-testid="stSidebar"] {
+            background-color: #111827 !important;
+            border-right: 1px solid #1f2937;
+        }
+        
+        /* Buttons */
+        .stButton > button {
+            background: linear-gradient(90deg, #6b46c1 0%, #3b82f6 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .stButton > button:hover {
+            opacity: 0.9;
+            color: white;
+        }
+        
+        /* Inputs */
+        .stTextInput > div > div > input, .stSelectbox > div > div > div {
+            background-color: #1f2937;
+            color: white;
+            border: 1px solid #374151;
+            border-radius: 8px;
+        }
+        
+        /* File Uploader */
+        [data-testid="stFileUploaderDropzone"] {
+            background-color: #111827;
+            border: 2px dashed #3b82f6;
+            border-radius: 12px;
+        }
+        
+        /* Expander/Cards */
+        .streamlit-expanderHeader {
+            background-color: #1f2937;
+            border-radius: 8px;
+        }
+        
+        /* Custom Welcome Banner */
+        .welcome-banner {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            border: 1px solid #312e81;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .welcome-banner h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+        
+        .welcome-banner p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+        
+        .badges {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .badge {
+            background-color: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Stat Cards for Sidebar */
+        .stat-card {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .stat-card-icon {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
+            padding: 0.8rem;
+            border-radius: 8px;
+            font-size: 1.2rem;
+        }
+        
+        /* Containers */
+        [data-testid="stVerticalBlock"] > [style*="flex-direction: column;"] > [data-testid="stVerticalBlock"] {
+            background-color: #111827;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid #1f2937;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+inject_custom_css()
+
 if "token" not in st.session_state:
     st.session_state.token = None
 
@@ -48,8 +178,35 @@ def login_screen():
 
 def dashboard():
     # --- SIDEBAR NAVIGATION ---
-    st.sidebar.title("🎓 Navigation")
+    st.sidebar.markdown(
+        """
+        <div style='display: flex; align-items: center; gap: 10px; margin-bottom: 20px;'>
+            <h2 style='margin: 0; color: white;'>🎓 SABI <span style='color: #60a5fa;'>AI</span></h2>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
     page = st.sidebar.radio("Go to", ["Chat & Upload", "📝 Quizzes", "📅 Study Plans"])
+    
+    st.sidebar.markdown("<br><br>", unsafe_allow_html=True)
+    st.sidebar.markdown("<h4 style='color: #94a3b8; font-size: 0.9rem;'>📊 Quick Stats</h4>", unsafe_allow_html=True)
+    
+    st.sidebar.markdown("""
+        <div class="stat-card">
+            <div class="stat-card-icon">📄</div>
+            <div>
+                <div style="font-size: 0.8rem; color: #94a3b8;">Documents Uploaded</div>
+                <div style="font-weight: 600;">12</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-card-icon">✅</div>
+            <div>
+                <div style="font-size: 0.8rem; color: #94a3b8;">Quizzes Created</div>
+                <div style="font-weight: 600;">5</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
     
     st.sidebar.divider()
     if st.sidebar.button("Logout", use_container_width=True):
@@ -70,13 +227,32 @@ def dashboard():
     # PAGE: CHAT & UPLOAD
     # ================================
     if page == "Chat & Upload":
-        st.title("🎓 SABI AI Dashboard")
-        st.markdown("Your academic materials, securely isolated.")
-        st.divider()
+        
+        # Welcome Banner HTML
+        st.markdown(
+            """
+            <div class="welcome-banner">
+                <div>
+                    <h1>Welcome back, Joseph 👋</h1>
+                    <p>Your academic materials, securely isolated.</p>
+                    <p style="font-size: 0.95rem;">Upload your documents, create quizzes, build study plans, and get AI-powered help — all in one place.</p>
+                    <div class="badges">
+                        <span class="badge">✨ AI Powered</span>
+                        <span class="badge">🔒 Secure</span>
+                        <span class="badge">🎓 Student Focused</span>
+                    </div>
+                </div>
+                <div style="font-size: 6rem; opacity: 0.8;">📚</div>
+            </div>
+            """, 
+            unsafe_allow_html=True
+        )
 
-        col1, col2 = st.columns([1, 2])
+        col1, col2 = st.columns([1, 1.2])
         with col1:
-            st.header("📚 Upload Material")
+            st.markdown("### ☁️ Upload Material")
+            st.caption("Add your study materials (PDF) and let SABI AI do the rest.")
+            st.markdown("<br>", unsafe_allow_html=True)
             
             # Combine existing courses and "Add New Course" option
             course_options_upload = list(course_options)
@@ -128,11 +304,13 @@ def dashboard():
                     st.warning("Please select a file first.")
 
         with col2:
-            st.header("💬 Ask your documents")
+            st.markdown("### 💬 Ask your documents")
+            st.caption("Get instant answers from your study materials.")
+            st.markdown("<br>", unsafe_allow_html=True)
+            
             query = st.text_input("Example: What should I study for my test?")
             
-            # Note: The ChatRequest in schemas.py requires 'message' and 'course'
-            if st.button("Ask Agent"):
+            if st.button("🚀 Ask Agent"):
                 if query:
                     with st.spinner("Thinking..."):
                         try:
@@ -143,7 +321,7 @@ def dashboard():
                             res = requests.post(f"{API_URL}/chat", json=payload, headers=headers)
                             if res.status_code == 200:
                                 data = res.json()
-                                st.markdown(f"> **{data.get('answer')}**")
+                                st.info(f"**{data.get('answer')}**")
                                 
                                 # Show Sources
                                 sources = data.get("sources", [])
@@ -157,6 +335,15 @@ def dashboard():
                             st.error(f"Could not connect to the backend: {e}")
                 else:
                     st.warning("Please enter a question.")
+            
+            st.markdown("<br><br>", unsafe_allow_html=True)
+            st.markdown("### ✨ How it works")
+            st.markdown("""
+            **1. Upload your study materials** (PDF)<br>
+            <span style="color: #94a3b8; font-size: 0.9rem;">We process and store them securely using advanced vector search.</span><br><br>
+            **2. Ask questions and get AI-powered answers**<br>
+            <span style="color: #94a3b8; font-size: 0.9rem;">From your own documents.</span>
+            """, unsafe_allow_html=True)
 
     # ================================
     # PAGE: QUIZZES
