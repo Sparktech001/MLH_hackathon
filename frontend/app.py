@@ -155,7 +155,20 @@ if "token" not in st.session_state:
 import re
 def render_interactive_quiz(content, quiz_id):
     blocks = content.split('\n\n')
-    for idx, block in enumerate(blocks):
+    quiz_blocks = []
+    answer_key_block = None
+    
+    # 1. Separate questions from Answer Key
+    for block in blocks:
+        if "answer key" in block.lower() or "answers:" in block.lower():
+            answer_key_block = block
+        else:
+            quiz_blocks.append(block)
+            
+    question_keys = []
+    
+    # 2. Render Questions
+    for idx, block in enumerate(quiz_blocks):
         lines = block.split('\n')
         q_text = []
         opts = []
@@ -169,10 +182,65 @@ def render_interactive_quiz(content, quiz_id):
         
         if opts and len(opts) >= 2:
             st.markdown("\n".join(q_text))
-            st.radio("Select answer:", opts, key=f"q_{quiz_id}_{idx}", index=None, label_visibility="collapsed")
+            key = f"q_{quiz_id}_{idx}"
+            st.radio("Select answer:", opts, key=key, index=None, label_visibility="collapsed")
             st.markdown("<br>", unsafe_allow_html=True)
+            question_keys.append((key, opts))
         else:
             st.markdown(block)
+            
+    # 3. Submit and Grade
+    if st.button("Submit Quiz", key=f"submit_{quiz_id}"):
+        if not answer_key_block:
+            st.success("Quiz submitted!")
+            st.warning("No answer key was found in this quiz to auto-grade.")
+            return
+            
+        # Parse user answers
+        user_letters = []
+        answered_count = 0
+        for q_key, opts in question_keys:
+            choice = st.session_state.get(q_key)
+            if choice:
+                answered_count += 1
+                m = re.match(r'^[-*]?\s*([A-Ea-e])[\.\)]\s', choice)
+                if m:
+                    user_letters.append(m.group(1).upper())
+                else:
+                    user_letters.append(choice[0].upper())
+            else:
+                user_letters.append(None)
+                
+        if answered_count < len(question_keys):
+            st.warning("⚠️ Please answer all questions before submitting!")
+            return
+            
+        # Try to parse answer key letters
+        clean_ak = answer_key_block.lower().replace("answer", "").replace("key", "").upper()
+        # Find all lone letters A-E
+        correct_letters = re.findall(r'[A-E]', clean_ak)
+        
+        st.markdown("### 📊 Your Results")
+        if len(correct_letters) >= len(question_keys):
+            # We found enough letters in the answer key to grade it!
+            # We take the first N letters corresponding to the N questions
+            correct_letters = correct_letters[:len(question_keys)]
+            
+            score = sum([1 for i in range(len(question_keys)) if user_letters[i] == correct_letters[i]])
+            percent = (score / len(question_keys)) * 100
+            
+            if percent >= 70:
+                st.success(f"🎉 **Pass!** You scored {score}/{len(question_keys)} ({percent:.0f}%)")
+            else:
+                st.error(f"📖 **Keep studying.** You scored {score}/{len(question_keys)} ({percent:.0f}%)")
+                
+            with st.expander("View Correct Answers"):
+                st.info(answer_key_block)
+        else:
+            # Fallback if answer key parsing failed to find enough letters
+            st.success("Quiz submitted! We couldn't auto-grade this specific format.")
+            with st.expander("Check Your Answers"):
+                st.info(answer_key_block)
 
 def login_screen():
     st.title("🎓 Login to SABI AI")
@@ -199,6 +267,26 @@ def login_screen():
                 st.error("Registration failed. Email might already exist.")
 
 def dashboard():
+    headers = {"Authorization": f"Bearer {st.session_state.token}"}
+
+    # Fetch User Courses (Shared across pages)
+    try:
+        res = requests.get(f"{API_URL}/courses", headers=headers)
+        user_courses = res.json().get("courses", [])
+    except:
+        user_courses = []
+    course_options = [f"{c['course_code']} - {c['course_name']}" for c in user_courses]
+    course_count = len(user_courses)
+    
+    # Fetch Quizzes count for stats
+    try:
+        res = requests.get(f"{API_URL}/learning/quizzes", headers=headers)
+        quizzes = res.json().get("quizzes", [])
+        quiz_count = len(quizzes)
+    except:
+        quizzes = []
+        quiz_count = 0
+
     # --- SIDEBAR NAVIGATION ---
     st.sidebar.markdown(
         """
@@ -213,19 +301,19 @@ def dashboard():
     st.sidebar.markdown("<br><br>", unsafe_allow_html=True)
     st.sidebar.markdown("<h4 style='color: #94a3b8; font-size: 0.9rem;'>📊 Quick Stats</h4>", unsafe_allow_html=True)
     
-    st.sidebar.markdown("""
+    st.sidebar.markdown(f"""
         <div class="stat-card">
-            <div class="stat-card-icon">📄</div>
+            <div class="stat-card-icon">📚</div>
             <div>
-                <div style="font-size: 0.8rem; color: #94a3b8;">Documents Uploaded</div>
-                <div style="font-weight: 600;">12</div>
+                <div style="font-size: 0.8rem; color: #94a3b8;">Courses Added</div>
+                <div style="font-weight: 600;">{course_count}</div>
             </div>
         </div>
         <div class="stat-card">
             <div class="stat-card-icon">✅</div>
             <div>
                 <div style="font-size: 0.8rem; color: #94a3b8;">Quizzes Created</div>
-                <div style="font-weight: 600;">5</div>
+                <div style="font-weight: 600;">{quiz_count}</div>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -234,16 +322,6 @@ def dashboard():
     if st.sidebar.button("Logout", use_container_width=True):
         st.session_state.token = None
         st.rerun()
-
-    headers = {"Authorization": f"Bearer {st.session_state.token}"}
-
-    # Fetch User Courses (Shared across pages)
-    try:
-        res = requests.get(f"{API_URL}/courses", headers=headers)
-        user_courses = res.json().get("courses", [])
-    except:
-        user_courses = []
-    course_options = [f"{c['course_code']} - {c['course_name']}" for c in user_courses]
 
     # ================================
     # PAGE: CHAT & UPLOAD
@@ -398,15 +476,12 @@ def dashboard():
         with col2:
             st.subheader("Your Past Quizzes")
             try:
-                res = requests.get(f"{API_URL}/learning/quizzes", headers=headers)
-                quizzes = res.json().get("quizzes", [])
+                # We already fetched quizzes above for stats, so we can just use the `quizzes` list
                 if not quizzes:
                     st.write("No quizzes generated yet.")
                 for q in quizzes:
                     with st.expander(f"Quiz: {q['course_code']} - {q['topic']}"):
                         render_interactive_quiz(q['content'], q['id'])
-                        if st.button("Submit Quiz", key=f"submit_{q['id']}"):
-                            st.success("Quiz submitted! (Automated grading coming soon)")
             except:
                 st.error("Could not fetch quizzes.")
 
