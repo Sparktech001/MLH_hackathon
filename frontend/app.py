@@ -152,6 +152,28 @@ inject_custom_css()
 if "token" not in st.session_state:
     st.session_state.token = None
 
+import re
+def render_interactive_quiz(content, quiz_id):
+    blocks = content.split('\n\n')
+    for idx, block in enumerate(blocks):
+        lines = block.split('\n')
+        q_text = []
+        opts = []
+        for line in lines:
+            line_s = line.strip()
+            # Match standard MCQ option formats like A), B., - C)
+            if re.match(r'^[-*]?\s*[A-Ea-e][\.\)]\s', line_s):
+                opts.append(line_s)
+            else:
+                q_text.append(line)
+        
+        if opts and len(opts) >= 2:
+            st.markdown("\n".join(q_text))
+            st.radio("Select answer:", opts, key=f"q_{quiz_id}_{idx}", index=None, label_visibility="collapsed")
+            st.markdown("<br>", unsafe_allow_html=True)
+        else:
+            st.markdown(block)
+
 def login_screen():
     st.title("🎓 Login to SABI AI")
     st.write("Welcome! Please log in or register to securely access your documents.")
@@ -382,7 +404,9 @@ def dashboard():
                     st.write("No quizzes generated yet.")
                 for q in quizzes:
                     with st.expander(f"Quiz: {q['course_code']} - {q['topic']}"):
-                        st.markdown(q['content'])
+                        render_interactive_quiz(q['content'], q['id'])
+                        if st.button("Submit Quiz", key=f"submit_{q['id']}"):
+                            st.success("Quiz submitted! (Automated grading coming soon)")
             except:
                 st.error("Could not fetch quizzes.")
 
