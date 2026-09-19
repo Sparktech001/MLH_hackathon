@@ -168,12 +168,19 @@ def render_interactive_quiz(content, quiz_id, headers):
     quiz_blocks = []
     answer_key_block = None
     
-    # 1. Separate questions from Answer Key
-    for block in blocks:
-        if "answer key" in block.lower() or "answers:" in block.lower():
-            answer_key_block = block
-        else:
-            quiz_blocks.append(block)
+    # 1. Separate questions from Answer Key (Always assume the last block is the answer key if it's short or has answer keywords)
+    # Search backwards for the answer key block
+    for i in range(len(blocks) - 1, -1, -1):
+        block_lower = blocks[i].lower()
+        if "answer" in block_lower or "key" in block_lower:
+            answer_key_block = blocks.pop(i)
+            break
+            
+    # If still not found, just assume the very last block is the answer key if there are multiple blocks
+    if not answer_key_block and len(blocks) > 1:
+        answer_key_block = blocks.pop(-1)
+        
+    quiz_blocks = blocks
             
     question_keys = []
     
@@ -184,8 +191,8 @@ def render_interactive_quiz(content, quiz_id, headers):
         opts = []
         for line in lines:
             line_s = line.strip()
-            # Match standard MCQ option formats like A), B., - C)
-            if re.match(r'^[-*]?\s*[A-Ea-e][\.\)]\s', line_s):
+            # Match standard MCQ option formats like A), B., - C), A -, A – (en-dash), A — (em-dash)
+            if re.match(r'^[-*]?\s*[A-Ea-e][\.\)\-\–\—\:]\s', line_s):
                 opts.append(line_s)
             else:
                 q_text.append(line)
