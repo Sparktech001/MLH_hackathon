@@ -1,7 +1,22 @@
 import streamlit as st
 import requests
+import threading
 
 API_URL = "https://sabi-ai-2tmb.onrender.com"
+
+# --- Wake up Render Server ---
+def wake_up_server():
+    try:
+        # A short timeout ensures this doesn't block forever, but it's enough to hit Render and start the spin-up
+        requests.get(f"{API_URL}/health", timeout=2)
+    except:
+        pass
+
+if "server_woken" not in st.session_state:
+    st.session_state.server_woken = True
+    threading.Thread(target=wake_up_server, daemon=True).start()
+# -----------------------------
+
 st.set_page_config(page_title="SABI AI", page_icon="🎓", layout="wide")
 
 if "token" not in st.session_state:
