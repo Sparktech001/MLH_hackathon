@@ -7,7 +7,17 @@ embeddings_model = GoogleGenerativeAIEmbeddings(model="models/gemini-embedding-0
 def add_chunks_to_db(chunks: list[str], metadatas: list[dict], ids: list[str]):
     try:
         # Generate embeddings using Google Gemini
-        vectors = embeddings_model.embed_documents(chunks)
+        raw_vectors = embeddings_model.embed_documents(chunks)
+        
+        # Truncate to 768 dimensions and normalize
+        import numpy as np
+        vectors = []
+        for vec in raw_vectors:
+            v = np.array(vec[:768])
+            norm = np.linalg.norm(v)
+            if norm > 0:
+                v = v / norm
+            vectors.append(v.tolist())
         
         # Prepare for Supabase insert
         data = []
@@ -36,7 +46,14 @@ def query_vector_store(query_text: str, user_email: str, n_results: int = 3):
     Queries the vector store using the custom match_documents rpc function.
     Returns a list of dicts.
     """
-    query_embedding = embeddings_model.embed_query(query_text)
+    raw_embedding = embeddings_model.embed_query(query_text)
+    
+    import numpy as np
+    v = np.array(raw_embedding[:768])
+    norm = np.linalg.norm(v)
+    if norm > 0:
+        v = v / norm
+    query_embedding = v.tolist()
     
     try:
         res = supabase.rpc("match_documents", {
