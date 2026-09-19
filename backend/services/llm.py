@@ -20,7 +20,11 @@ def generate_response(prompt: str) -> str:
     This decoupling ensures our agent doesn't care which LLM SDK we are using under the hood.
     """
     response = llm.invoke([HumanMessage(content=prompt)])
-    return response.content
+    content = response.content
+    if isinstance(content, list):
+        # Handle cases where Langchain returns a list of content blocks
+        return "".join(part.get("text", "") for part in content if isinstance(part, dict) and "text" in part)
+    return str(content)
 
 # Small test block that runs if you execute `python llm.py` directly
 if __name__ == "__main__":
